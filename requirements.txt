@@ -1,0 +1,4 @@
+# Requirements for Executive Marketing Summary GenAI Project
+pydantic
+pandas
+openai
