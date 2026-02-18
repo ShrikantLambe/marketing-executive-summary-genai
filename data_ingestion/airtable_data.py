@@ -67,4 +67,3 @@ if __name__ == "__main__":
     all_data = load_all_airtable()
     for k, v in all_data.items():
         print(f"Loaded {len(v)} records for {k}")
-        print(f"Loaded {len(v)} records for {k}")
