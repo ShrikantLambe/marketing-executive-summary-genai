@@ -3,9 +3,12 @@ import os
 from typing import List
 from data_models.marketing_objects import Campaign, Attendee, Response, Activity, Contact, Account, Opportunity
 
-# Set your OpenAI API key as an environment variable or directly here
-OPENAI_API_KEY = os.getenv(
-    "OPENAI_API_KEY", "REMOVED_OPENAI_KEY")
+
+# Set your OpenAI API key as an environment variable ONLY
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError(
+        "OPENAI_API_KEY environment variable not set. Please set it in your environment.")
 openai.api_key = OPENAI_API_KEY
 
 
