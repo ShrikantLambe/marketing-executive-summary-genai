@@ -169,6 +169,14 @@ with right_col:
 </div>
                         """,
             unsafe_allow_html=True
+    if st.session_state.get('summary') and st.session_state.get('selected_campaign'):
+        st.subheader("Executive Summary")
+        st.success(st.session_state['summary'])
+        st.download_button(
+            label="Download Summary as Text",
+            data=st.session_state['summary'],
+            file_name=f"executive_summary_{st.session_state['selected_campaign'].name.replace(' ', '_')}.txt",
+            mime="text/plain"
         )
         from fpdf import FPDF
         import io
@@ -243,6 +251,12 @@ with right_col:
         """, unsafe_allow_html=True)
 
         # (Image download button and JS removed; replaced with screenshot tip above)
+        st.download_button(
+            label="Download Summary as PDF",
+            data=pdf_output,
+            file_name=f"executive_summary_{st.session_state['selected_campaign'].name.replace(' ', '_')}.pdf",
+            mime="application/pdf"
+        )
     else:
         st.info(
             "Select a campaign, customize the prompt if desired, and click 'Generate Executive Summary' to view the summary.")

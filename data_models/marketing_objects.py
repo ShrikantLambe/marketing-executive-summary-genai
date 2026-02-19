@@ -39,7 +39,7 @@ class Contact(BaseModel):
     id: str
     name: str
     email: str
-    lead: bool
+    lead: Optional[bool] = None
     account_id: Optional[str]
 
 

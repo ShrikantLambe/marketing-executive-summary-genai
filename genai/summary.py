@@ -21,7 +21,8 @@ def generate_summary(
     accounts: List[Account],
     opportunities: List[Opportunity],
     program_name: str = None,
-    user_prompt: str = None
+    user_prompt: str = None,
+    debug: bool = True
 ) -> str:
     """
     Generate an executive summary using OpenAI GPT based on provided marketing data.
@@ -66,13 +67,19 @@ def generate_summary(
     if user_prompt:
         prompt += f"\nUser Instructions:\n{user_prompt}\n"
 
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)
-    chat_response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful marketing analyst."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=400
-    )
-    return chat_response.choices[0].message.content.strip()
+    if debug:
+        print("[DEBUG] Prompt sent to OpenAI:\n", prompt)
+    try:
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        chat_response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful marketing analyst."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=400
+        )
+        return chat_response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"[ERROR] Exception during OpenAI call: {e}")
+        return f"[ERROR] Exception during OpenAI call: {e}"
