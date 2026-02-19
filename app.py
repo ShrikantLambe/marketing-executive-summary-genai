@@ -1,18 +1,18 @@
 import streamlit as st
-from data_ingestion.load_data import load_from_csv
+from data_ingestion.airtable_data import load_all_airtable
 from data_models.marketing_objects import Campaign, Attendee, Response, Activity, Contact, Account, Opportunity
 from genai.summary import generate_summary
 
 
 def load_all_data():
-    base = "dummy_output"
-    campaigns = load_from_csv(f"{base}/campaigns.csv", Campaign)
-    accounts = load_from_csv(f"{base}/accounts.csv", Account)
-    contacts = load_from_csv(f"{base}/contacts.csv", Contact)
-    attendees = load_from_csv(f"{base}/attendees.csv", Attendee)
-    responses = load_from_csv(f"{base}/responses.csv", Response)
-    activities = load_from_csv(f"{base}/activities.csv", Activity)
-    opportunities = load_from_csv(f"{base}/opportunities.csv", Opportunity)
+    data = load_all_airtable()
+    campaigns = data["campaigns"]
+    accounts = data["accounts"]
+    contacts = data["contacts"]
+    attendees = data["attendees"]
+    responses = data["responses"]
+    activities = data["activities"]
+    opportunities = data["opportunities"]
     return campaigns, accounts, contacts, attendees, responses, activities, opportunities
 
 
@@ -21,14 +21,43 @@ st.title("📊 Executive Marketing Summary Generator")
 st.markdown(
     "Select a campaign to generate and view an executive-ready summary powered by GenAI.")
 
-campaigns, accounts, contacts, attendees, responses, activities, opportunities = load_all_data()
+
+try:
+    campaigns, accounts, contacts, attendees, responses, activities, opportunities = load_all_data()
+
+except EnvironmentError as e:
+    st.error(f"Airtable environment error: {e}")
+    st.markdown("""
+    **Environment Setup:**
+    - Set your Airtable token and base ID securely as environment variables:
+        - In your terminal or ~/.zshrc:
+          ```
+          export AIRTABLE_TOKEN="your_personal_access_token"
+          export AIRTABLE_BASE_ID="your_base_id"
+          ```
+    - Never hardcode tokens in code or share them publicly.
+    - Restart your terminal or run `source ~/.zshrc` before launching Streamlit.
+    """)
+    st.stop()
+except Exception as e:
+    st.error(f"Airtable loading error: {e}")
+    st.stop()
+
 campaign_options = {c.name: c for c in campaigns}
 
+if not campaign_options:
+    st.warning("No campaigns found in Airtable. Please check your data.")
+    st.stop()
 left_col, right_col = st.columns([1, 2])
+
 
 with left_col:
     selected_campaign_name = st.selectbox(
         "Choose a Campaign", list(campaign_options.keys()), key="campaign_select_unique")
+    if selected_campaign_name is None:
+        st.warning("Please select a campaign.")
+        st.stop()
+
     selected_campaign = campaign_options[selected_campaign_name]
 
     selected_attendees = [
@@ -44,6 +73,7 @@ with left_col:
         num_attendees = len(attendees)
         pipeline = sum(o.amount for o in opportunities)
         num_opps = len(opportunities)
+
         prompt = f'''
 Please provide a bulleted executive summary for this campaign, including:
 - Number of attendees
@@ -56,6 +86,9 @@ Format the summary as clear bullet points with real numbers and, if possible, us
 '''
         return prompt
 
+
+# --- UI logic (moved out of function) ---
+
     default_prompt = build_default_prompt(
         selected_attendees, selected_opportunities)
     user_prompt = st.text_area(
@@ -67,9 +100,9 @@ Format the summary as clear bullet points with real numbers and, if possible, us
     generate = st.button("Generate Executive Summary",
                          key="generate_button_unique")
 
-with right_col:
     if 'summary' not in st.session_state:
         st.session_state['summary'] = ''
+
     if generate:
         with st.spinner("Generating summary with GenAI..."):
             summary = generate_summary(
@@ -84,13 +117,18 @@ with right_col:
                 user_prompt=user_prompt
             )
             st.session_state['summary'] = summary
-    if st.session_state['summary']:
+
+    # Store these for right_col
+    st.session_state['selected_campaign'] = selected_campaign
+
+with right_col:
+    if st.session_state.get('summary') and st.session_state.get('selected_campaign'):
         st.subheader("Executive Summary")
         st.success(st.session_state['summary'])
         st.download_button(
             label="Download Summary as Text",
             data=st.session_state['summary'],
-            file_name=f"executive_summary_{selected_campaign.name.replace(' ', '_')}.txt",
+            file_name=f"executive_summary_{st.session_state['selected_campaign'].name.replace(' ', '_')}.txt",
             mime="text/plain"
         )
         from fpdf import FPDF
@@ -120,12 +158,13 @@ with right_col:
         st.download_button(
             label="Download Summary as PDF",
             data=pdf_output,
-            file_name=f"executive_summary_{selected_campaign.name.replace(' ', '_')}.pdf",
+            file_name=f"executive_summary_{st.session_state['selected_campaign'].name.replace(' ', '_')}.pdf",
             mime="application/pdf"
         )
     else:
         st.info(
             "Select a campaign, customize the prompt if desired, and click 'Generate Executive Summary' to view the summary.")
+
 
 st.markdown("---")
 st.caption("Powered by GenAI | Designed with Streamlit")
