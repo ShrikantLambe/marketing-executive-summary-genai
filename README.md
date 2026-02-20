@@ -96,5 +96,5 @@ graph TD
 ---
 
 ## 👥 Authors & License
-- Built by marketing analytics and AI engineers
+- Built by Shrikant Lambe
 - MIT License
