@@ -75,8 +75,8 @@ graph TD
 ## 🛠️ Getting Started
 1. Clone the repo and install dependencies:
 	```bash
-	git clone <repo-url>
-	cd <project-folder>
+	git clone https://github.com/ShrikantLambe/marketing-executive-summary-genai.git
+	cd marketing-executive-summary-genai
 	pip install -r requirements.txt
 	```
 2. Configure your environment:
